@@ -6,7 +6,6 @@ import math
 from bvh import Bvh
 from skeleton import Skeleton
 import glob
-import argparse
 
 sys.path.append(os.getcwd())
 
@@ -70,6 +69,7 @@ def main():
             if error:
                 error_num += 1
         print(' Error frame num:', error_num, ' Percentage:', error_num / poses.shape[0] * 100, '%')
+
 
 if __name__ == '__main__':
     main()
