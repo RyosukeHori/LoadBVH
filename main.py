@@ -72,8 +72,8 @@ def main():
             if error:
                 error_num += 1
 
-        print(' Error frame num:', error_num, ' Percentage:', error_num / poses.shape[0] * 100, '%')
-        print(' Error count:', bone_err_counter).values
+        print(' Error frame num:', error_num, '/', poses.shape[0], ', Percentage:', error_num / poses.shape[0] * 100, '%')
+        print(' Error count:', bone_err_counter)
 
 
 if __name__ == '__main__':
