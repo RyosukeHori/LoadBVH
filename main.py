@@ -39,20 +39,22 @@ def load_bvh_file(fname, skeleton):
 
 
 def main():
-    skt_bvh = './test.bvh'
+    bvh_files = glob.glob(os.path.expanduser('./*.bvh'))
+    bvh_files.sort()
+    print(bvh_files)
     exclude_bones = {'Hand', 'Foot', 'End', 'Toe', 'Head'}
     spec_channels = {'LeftForeArm': ['Xrotation', 'Yrotation'], 'RightForeArm': ['Xrotation', 'Yrotation'],
                      'LeftLeg': ['Xrotation'], 'RightLeg': ['Xrotation'],
                      'LeftFoot': ['Xrotation', 'Yrotation'], 'RightFoot': ['Xrotation', 'Yrotation']}
     skeleton = Skeleton()
-    skeleton.load_from_bvh(skt_bvh, exclude_bones, spec_channels)
+    skeleton.load_from_bvh(bvh_files[0], exclude_bones, spec_channels)
 
-    bvh_files = glob.glob(os.path.expanduser('./*.bvh'))
-    bvh_files.sort()
-    print(bvh_files)
     for file in bvh_files:
         print('extracting trajectory from %s' % file)
         poses, bone_addr = load_bvh_file(file, skeleton)
+        bone_err_counter = dict()
+        for k in bone_addr.keys():
+            bone_err_counter[k] = 0
         error_num = 0
         for frame, pose in enumerate(poses):
             error = False
@@ -65,10 +67,13 @@ def main():
                     if val < lb[idx] or val > ub[idx]:
                         error = error_rot = True
                 if error_rot:
-                    print(' frame:', frame, ' bone:', bone, ' rot:', rot.tolist(), ' lb:', lb, ' ub:', ub)
+                    bone_err_counter[bone] += 1
+                    #print('  frame:', frame, ' bone:', bone, ' rot:', rot.tolist(), ' lb:', lb, ' ub:', ub)
             if error:
                 error_num += 1
+
         print(' Error frame num:', error_num, ' Percentage:', error_num / poses.shape[0] * 100, '%')
+        print(' Error count:', bone_err_counter).values
 
 
 if __name__ == '__main__':
