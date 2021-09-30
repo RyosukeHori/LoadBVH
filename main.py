@@ -83,7 +83,8 @@ def main():
                 if error_rot:
                     bone_err_counter[bone] += 1
                     #print('  frame:', frame, ' bone:', bone, ' rot:', rot.tolist(), ' lb:', lb, ' ub:', ub)'
-            rot_vals.append(rot_val)
+            if rot_val:
+                rot_vals.append(rot_val)
             if error:
                 error_num += 1
 
