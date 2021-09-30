@@ -7,6 +7,7 @@ from bvh import Bvh
 from skeleton import Skeleton
 import glob
 import matplotlib.pyplot as plt
+import logging
 
 sys.path.append(os.getcwd())
 
@@ -14,6 +15,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--mocap-fr', type=int, default=50)
 parser.add_argument('--dt', type=float, default=1 / 50)
 args = parser.parse_args()
+
+logger = logging.getLogger(' Error 3')
+sh = logging.StreamHandler()
+logger.addHandler(sh)
+logger.setLevel(20)
 
 
 def load_bvh_file(fname, skeleton):
@@ -55,15 +61,23 @@ def main():
     bone_err_counters = []
     for file in bvh_files:
         data_name = file[7:-4]
+
+        #fh = logging.FileHandler(data_name + '.log')
+        #logger.addHandler(fh)
+        log_dir = './logs/' + data_name + '.log'
+        logging.basicConfig(filename=log_dir, filemode='w')
+
         print('extracting trajectory from %s' % file)
         poses, bone_addr = load_bvh_file(file, skeleton)
+
         bone_err_counter = dict()
         for k in bone_addr.keys():
             bone_err_counter[k] = 0
-        error_num = 0
+        error_frame_num = 0
         rot_vals = []
+        
         for frame, pose in enumerate(poses):
-            error = False
+            error_frame = False
             rot_val = []
             for bone, addr in bone_addr.items():
                 lb = skeleton.name2bone[bone].lb
@@ -73,22 +87,23 @@ def main():
                     pos = rot[:3]
                     rot = rot[3:]
                     if pos.tolist() == [0, 0, 0]:
-                        # log as missing data
+                        logger.info(' frame %s is missing', frame)
                         break
                 rot_val.append([rot, lb, ub])
                 error_rot = False
                 for idx, val in enumerate(rot):
                     if val < lb[idx] or val > ub[idx]:
-                        error = error_rot = True
+                        error_frame = error_rot = True
+
                 if error_rot:
                     bone_err_counter[bone] += 1
-                    #print('  frame:', frame, ' bone:', bone, ' rot:', rot.tolist(), ' lb:', lb, ' ub:', ub)'
+                    logger.warning(' frame: %s, joint: %s,  rot: %s, lb: %s,  ub: %s', frame, bone, rot.tolist(), lb, ub)
             if rot_val:
                 rot_vals.append(rot_val)
-            if error:
-                error_num += 1
+            if error_frame:
+                error_frame_num += 1
 
-        print(' Error frame num:', error_num, '/', poses.shape[0], ', Percentage:', error_num / poses.shape[0] * 100, '%')
+        print(' Error frame num:', error_frame_num, '/', poses.shape[0], ', Percentage:', error_frame_num / poses.shape[0] * 100, '%')
         print(' Error count:', bone_err_counter)
         bone_err_counters.append(bone_err_counter)
 
