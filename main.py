@@ -31,6 +31,8 @@ def load_bvh_file(fname, skeleton):
 
     poses = np.zeros((mocap.nframes, dof_num))
     for i in range(mocap.nframes):
+        if i % 1000 == 0:
+            print("loaded frame:", i)
         for bone in skeleton.bones:
             trans = np.array(mocap.frame_joint_channels(i, bone.name, bone.channels))
             start_ind, end_ind = bone_addr[bone.name]
@@ -67,6 +69,12 @@ def main():
                 lb = skeleton.name2bone[bone].lb
                 ub = skeleton.name2bone[bone].ub
                 rot = pose[addr[0]:addr[1]]
+                if bone == "Hips":
+                    pos = rot[:3]
+                    rot = rot[3:]
+                    if pos.tolist() == [0, 0, 0]:
+                        # log as missing data
+                        break
                 rot_val.append([rot, lb, ub])
                 error_rot = False
                 for idx, val in enumerate(rot):
@@ -92,7 +100,6 @@ def main():
         print(rot_vals.shape)
         for bone_idx in range(rot_vals.shape[1]):
             for axis in range(3):  # z, x, y
-                #fig = plt.figure()
                 fig, ax = plt.subplots()
                 lb = rot_vals[0, bone_idx, 1, axis]
                 ub = rot_vals[0, bone_idx, 2, axis]
@@ -129,7 +136,6 @@ def main():
             ax.legend()
             plt.savefig("./histogram/" + data_name[:-5] + ".png")
             bone_err_counters = []
-
 
 
 if __name__ == '__main__':

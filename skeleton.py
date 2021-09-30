@@ -37,29 +37,29 @@ class Skeleton:
         self.root = None
 
     RoM = {            # [[x_lb, y_lb, z_lb],    [x_ub, y_ub, z_ub]]
-        'Hips':          [[-180, -180, -180],    [180, 180, 180]],
+        'Hips':          [[-120, -180, -120],    [120, 180, 120]],
         'LeftUpLeg':     [[-100, -40, -40],      [30, 60, 40]],
-        'LeftLeg':       [[-10, -10, -10],       [150, 10, 10]],
+        'LeftLeg':       [[-20, -10, -10],       [150, 10, 10]],
         'LeftFoot':      [[-20, -10, -1],        [40, 30, 1]],
         'RightUpLeg':    [[-100, -60, -40],      [30, 40, 40]],
-        'RightLeg':      [[-10, -10, -10],       [150, 10, 10]],
+        'RightLeg':      [[-20, -10, -10],       [150, 10, 10]],
         'RightFoot':     [[-20, -30, -1],        [40, 10, 1]],
-        'Spine':         [[-10, -10, -10],       [15, 10, 10]],
-        'Spine1':        [[-10, -10, -10],       [15, 10, 10]],
+        'Spine':         [[-15, -10, -10],       [25, 10, 10]],
+        'Spine1':        [[-10, -10, -10],       [20, 10, 10]],
         'Spine2':        [[-10, -10, -10],       [15, 10, 10]],
         'Spine3':        [[-10, -10, -10],       [15, 10, 10]],
         'Spine4':        [[-10, -10, -10],       [15, 10, 10]],
         'Spine5':        [[-10, -10, -10],       [15, 10, 10]],
         'Spine6':        [[-10, -10, -10],       [15, 10, 10]],
-        'LeftShoulder':  [[-20, -20, -20],       [20, 20, 20]],
-        'LeftArm':       [[-40, -120, -100],     [120, 30, 40]],
-        'LeftForeArm':   [[-80, -150, -1],       [80, 1, 1]],
+        'LeftShoulder':  [[-20, -20, -25],       [20, 20, 50]],
+        'LeftArm':       [[-90, -120, -100],     [120, 60, 40]],
+        'LeftForeArm':   [[-5, -150, -5],        [5, 1, 5]],
         'LeftHand':      [[-1, -80, -30],        [1, 60, 20]],
-        'RightShoulder': [[-20, -20, -20],       [20, 20, 20]],
-        'RightArm':      [[-40, -30, -40],       [120, 120, 100]],
-        'RightForeArm':  [[-80, -1, -1],         [80, 150, 1]],
+        'RightShoulder': [[-20, -20, -50],       [20, 20, 25]],
+        'RightArm':      [[-90, -60, -40],       [120, 120, 100]],
+        'RightForeArm':  [[-5, -1, -5],          [5, 150, 5]],
         'RightHand':     [[-1, -60, -20],        [1, 80, 30]],
-        'Neck':          [[-30, -30, -30],       [45, 30, 30]]
+        'Neck':          [[-45, -30, -30],       [45, 30, 30]]
     }
 
     def load_from_bvh(self, fname, exclude_bones=None, spec_channels=None):
@@ -76,7 +76,7 @@ class Skeleton:
         self.root = Bone()
         self.root.id = 0
         self.root.name = joint_names[0]
-        self.root.channels = mocap.joint_channels(self.root.name)[3:]
+        self.root.channels = mocap.joint_channels(self.root.name)
         self.root.lb = [self.RoM[self.root.name][0][2], self.RoM[self.root.name][0][0], self.RoM[self.root.name][0][1]]
         self.root.ub = [self.RoM[self.root.name][1][2], self.RoM[self.root.name][1][0], self.RoM[self.root.name][1][1]]
         self.name2bone[self.root.name] = self.root
