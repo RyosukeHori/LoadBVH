@@ -16,11 +16,8 @@ parser.add_argument('--mocap-fr', type=int, default=50)
 parser.add_argument('--dt', type=float, default=1 / 50)
 args = parser.parse_args()
 
-logger = logging.getLogger(' Error 3')
-sh = logging.StreamHandler()
-logger.addHandler(sh)
+logger = logging.getLogger("test")
 logger.setLevel(20)
-
 
 def load_bvh_file(fname, skeleton):
     with open(fname) as f:
@@ -48,7 +45,7 @@ def load_bvh_file(fname, skeleton):
 
 
 def main():
-    bvh_files = glob.glob(os.path.expanduser('./data/*.bvh'))
+    bvh_files = glob.glob(os.path.expanduser('./*.bvh'))
     bvh_files.sort()
     print(bvh_files)
     exclude_bones = {'Hand', 'Foot', 'End', 'Toe', 'Head'}
@@ -60,11 +57,10 @@ def main():
 
     bone_err_counters = []
     for file in bvh_files:
-        data_name = file[7:-4]
+        data_name = file[2:-4]
 
-        #fh = logging.FileHandler(data_name + '.log')
-        #logger.addHandler(fh)
-        log_dir = './logs/' + data_name + '.log'
+        log_dir = './logs/' + data_name[:-6] + '.log'
+        #logging.basicConfig(filename=log_dir, filemode='w', force=True)
         logging.basicConfig(filename=log_dir, filemode='w')
 
         print('extracting trajectory from %s' % file)
@@ -105,6 +101,8 @@ def main():
 
         print(' Error frame num:', error_frame_num, '/', poses.shape[0], ', Percentage:', error_frame_num / poses.shape[0] * 100, '%')
         print(' Error count:', bone_err_counter)
+        logger.info(' Error frame num: %s/%s, Percentage: %s', error_frame_num, poses.shape[0],error_frame_num / poses.shape[0] * 100)
+        logger.info(' Error count: %s\n\n\n', bone_err_counter)
         bone_err_counters.append(bone_err_counter)
 
         # save histograms
@@ -113,7 +111,7 @@ def main():
             bone_dict[i] = k
         rot_vals = np.array(rot_vals)
         dof_ind = {0: 'z', 1: 'x', 2: 'y'}
-        print(rot_vals.shape)
+
         for bone_idx in range(rot_vals.shape[1]):
             for axis in range(3):  # z, x, y
                 fig, ax = plt.subplots()
