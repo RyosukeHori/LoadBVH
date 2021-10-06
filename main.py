@@ -11,11 +11,6 @@ import logging
 
 sys.path.append(os.getcwd())
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--mocap-fr', type=int, default=50)
-parser.add_argument('--dt', type=float, default=1 / 50)
-args = parser.parse_args()
-
 logger = logging.getLogger("test")
 logger.setLevel(20)
 
@@ -35,13 +30,27 @@ def load_bvh_file(fname, skeleton):
     poses = np.zeros((mocap.nframes, dof_num))
     for i in range(mocap.nframes):
         if i % 1000 == 0:
-            print("loaded frame:", i)
+            print("loaded frames:", i)
         for bone in skeleton.bones:
             trans = np.array(mocap.frame_joint_channels(i, bone.name, bone.channels))
             start_ind, end_ind = bone_addr[bone.name]
             poses[i, start_ind:end_ind] = trans
 
     return poses[1:], bone_addr
+
+
+def compute_accel(joints):
+    """
+    Computes acceleration of 3D joints.
+    Args:
+        joints (Nx19x3).
+    Returns:
+        Accelerations (N-2).
+    """
+    velocities = joints[1:] - joints[:-1]
+    acceleration = velocities[1:] - velocities[:-1]
+    acceleration_normed = np.linalg.norm(acceleration, axis=2)
+    return np.mean(acceleration_normed, axis=1)
 
 
 def main():
@@ -71,21 +80,27 @@ def main():
             bone_err_counter[k] = 0
         error_frame_num = 0
         rot_vals = []
+        joint_positions = []
         
         for frame, pose in enumerate(poses):
             error_frame = False
             rot_val = []
+            joint_position = []
             for bone, addr in bone_addr.items():
                 lb = skeleton.name2bone[bone].lb
                 ub = skeleton.name2bone[bone].ub
                 rot = pose[addr[0]:addr[1]]
+
                 if bone == "Hips":
                     pos = rot[:3]
                     rot = rot[3:]
                     if pos.tolist() == [0, 0, 0]:
                         logger.info(' frame %s is missing', frame)
+                        zeros = np.zeros((len(bone_addr), 3))
+                        joint_positions.append(zeros)
                         break
                 rot_val.append([rot, lb, ub])
+                joint_position.append(pos)
                 error_rot = False
                 for idx, val in enumerate(rot):
                     if val < lb[idx] or val > ub[idx]:
@@ -94,6 +109,8 @@ def main():
                 if error_rot:
                     bone_err_counter[bone] += 1
                     logger.warning(' frame: %s, joint: %s,  rot: %s, lb: %s,  ub: %s', frame, bone, rot.tolist(), lb, ub)
+            if joint_position:
+                joint_positions.append(np.array(joint_position))
             if rot_val:
                 rot_vals.append(rot_val)
             if error_frame:
@@ -101,9 +118,14 @@ def main():
 
         print(' Error frame num:', error_frame_num, '/', poses.shape[0], ', Percentage:', error_frame_num / poses.shape[0] * 100, '%')
         print(' Error count:', bone_err_counter)
-        logger.info(' Error frame num: %s/%s, Percentage: %s', error_frame_num, poses.shape[0],error_frame_num / poses.shape[0] * 100)
+        logger.info(' Error frame num: %s/%s, Percentage: %s', error_frame_num, poses.shape[0], error_frame_num / poses.shape[0] * 100)
         logger.info(' Error count: %s\n\n\n', bone_err_counter)
         bone_err_counters.append(bone_err_counter)
+
+        # save acceleration to csv
+        joint_positions = np.array(joint_positions)
+        accels = compute_accel(joint_positions)
+        print(accels)
 
         # save histograms
         bone_dict = dict()
