@@ -39,20 +39,6 @@ def load_bvh_file(fname, skeleton):
     return poses[1:], bone_addr
 
 
-def compute_accel(joints):
-    """
-    Computes acceleration of 3D joints.
-    Args:
-        joints (Nx19x3).
-    Returns:
-        Accelerations (N-2).
-    """
-    velocities = joints[1:] - joints[:-1]
-    acceleration = velocities[1:] - velocities[:-1]
-    acceleration_normed = np.linalg.norm(acceleration, axis=2)
-    return np.mean(acceleration_normed, axis=1)
-
-
 def main():
     bvh_files = glob.glob(os.path.expanduser('./*.bvh'))
     bvh_files.sort()
@@ -121,11 +107,6 @@ def main():
         logger.info(' Error frame num: %s/%s, Percentage: %s', error_frame_num, poses.shape[0], error_frame_num / poses.shape[0] * 100)
         logger.info(' Error count: %s\n\n\n', bone_err_counter)
         bone_err_counters.append(bone_err_counter)
-
-        # save acceleration to csv
-        joint_positions = np.array(joint_positions)
-        accels = compute_accel(joint_positions)
-        print(accels)
 
         # save histograms
         bone_dict = dict()
