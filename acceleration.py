@@ -26,7 +26,7 @@ def compute_accel(joints):
     velocities = joints[1:] - joints[:-1]
     acceleration = velocities[1:] - velocities[:-1]
     acceleration_normed = np.linalg.norm(acceleration, axis=2)
-    return acceleration_normed
+    return acceleration_normed, np.mean(acceleration_normed, axis=1)
 
 csv_files = glob.glob(os.path.expanduser('CSV/*.csv'))
 csv_files.sort()
@@ -56,13 +56,16 @@ for file_path in csv_files:
             times.append(int(time))
             frame += 1
     joints = np.array(joints).reshape(-1, 18, 3)
-    accel = compute_accel(joints)
+    accel, accel_mean = compute_accel(joints)
     for miss in missing_frame:
         accel[miss - 2, :] = 0
+        accel_mean[miss - 2] = 0
         if miss >= len(accel):
             break
         accel[miss - 1, :] = 0
+        accel_mean[miss - 1] = 0
         accel[miss, :] = 0
+        accel_mean[miss] = 0
     left = np.array(times[1:-1])
 
     with open(dir_path + '/' + file_name + "_accel.csv", 'w') as f:
@@ -80,6 +83,7 @@ for file_path in csv_files:
         ax.plot(left, accel[:, j_idx], color = cm.colors[j_idx])
         plt.setp(ax.get_xticklabels(), rotation=-30)
         plt.savefig(dir_path + '/bone_' + str(j_idx) + ".png")
+        plt.close()
 
     fig, ax = plt.subplots()
     ax.get_xaxis().get_major_formatter().set_useOffset(False)
@@ -88,4 +92,13 @@ for file_path in csv_files:
         ax.plot(left, accel[:, j_idx], color = cm.colors[j_idx])
     plt.setp(ax.get_xticklabels(), rotation=-30)
     plt.savefig(dir_path + '/' + file_name + ".png")
+    plt.close()
+
+    fig, ax = plt.subplots()
+    ax.get_xaxis().get_major_formatter().set_useOffset(False)
+    ax.get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    ax.plot(left, accel_mean)
+    plt.setp(ax.get_xticklabels(), rotation=-30)
+    plt.savefig(dir_path + '/' + file_name + "_mean.png")
+    plt.close()
 
